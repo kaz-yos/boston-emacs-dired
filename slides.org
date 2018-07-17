@@ -1,0 +1,294 @@
+* Meta-data :noexport:
+  # http://orgmode.org/worg/exporters/beamer/tutorial.html
+  #+TITLE: Emacs Dired
+  #+AUTHOR: Kazuki Yoshida
+  #+EMAIL:
+  #+DATE: July 17, 2018
+  #+DESCRIPTION:
+  #+KEYWORDS:
+  #+OPTIONS: toc:nil
+  #+OPTIONS: H:2
+  #+OPTIONS: ^:{}
+  #+STARTUP: beamer
+  #+COLUMNS: %40ITEM %10BEAMER_env(Env) %9BEAMER_envargs(Env Args) %4BEAMER_col(Col) %10BEAMER_extra(Extra)
+  #+LATEX_CLASS: beamer
+  #+LATEX_CLASS_OPTIONS: [dvipdfmx,bigger,aspectratio=169]
+  #+LATEX_HEADER: %% No navigation bar
+  #+LATEX_HEADER: \setbeamertemplate{navigation symbols}{}
+  #+LATEX_HEADER: %% Page number with current/total format
+  #+LATEX_HEADER: \setbeamerfont{page number in head/foot}{size=\scriptsize}
+  #+LATEX_HEADER: \setbeamertemplate{footline}[frame number]
+  #+LATEX_HEADER: \setbeamertemplate{frametitle}[default][center]
+  #+LATEX_HEADER: %% With item labels
+  #+LATEX_HEADER: \setbeamertemplate{bibliography item}{\insertbiblabel}
+  #+LATEX_HEADER: %% Without item labels
+  #+LATEX_HEADER: %% \setbeamertemplate{bibliography item}{}
+  #+LATEX_HEADER:
+  #+LATEX_HEADER: %% Math
+  #+LATEX_HEADER: \usepackage{amsmath}
+  #+LATEX_HEADER: \usepackage{amssymb}
+  #+LATEX_HEADER: \usepackage{wasysym}
+  #+LATEX_HEADER: %% Allow new page within align
+  #+LATEX_HEADER: \allowdisplaybreaks
+  #+LATEX_HEADER: \usepackage{cancel}
+  #+LATEX_HEADER: %% Code
+  #+LATEX_HEADER: \usepackage{listings}
+  #+LATEX_HEADER: \usepackage{courier}
+  #+LATEX_HEADER: \lstset{basicstyle=\footnotesize\ttfamily, breaklines=true, frame=single}
+  #+LATEX_HEADER: \usepackage[cache=false]{minted}
+  #+LATEX_HEADER: \usemintedstyle{vs}
+  #+LATEX_HEADER: %% Graphics
+  #+LATEX_HEADER: \usepackage{graphicx}
+  #+LATEX_HEADER: \usepackage{grffile}
+  #+LATEX_HEADER: %% DAG
+  #+LATEX_HEADER: \usepackage{tikz}
+  #+LATEX_HEADER: \usetikzlibrary{positioning,shapes.geometric}
+  #+LATEX_HEADER: %% Allow URL embedding
+  #+LATEX_HEADER: \usepackage{url}
+  #+LATEX_HEADER: %% Do not count backup slides.
+  #+LATEX_HEADER: %% https://tex.stackexchange.com/questions/70448/dont-count-backup-slides
+  #+LATEX_HEADER: \newcommand{\backupbegin}{
+  #+LATEX_HEADER:    \newcounter{finalframe}
+  #+LATEX_HEADER:    \setcounter{finalframe}{\value{framenumber}}
+  #+LATEX_HEADER: }
+  #+LATEX_HEADER: \newcommand{\backupend}{
+  #+LATEX_HEADER:    \setcounter{framenumber}{\value{finalframe}}
+  #+LATEX_HEADER: }
+  #+LATEX_HEADER: %% Include convenient commands.
+  #+LATEX_HEADER: \input{\string~/.emacs.d/misc/GrandMacros}
+# ############################################################################ #
+
+* Introduction
+** References
+- [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Dired.html][GNU Emacs Manual: 30 Dired, the Directory Editor]]
+- [[https://github.com/Fuco1/dired-hacks][Dired Hacks]]
+- [[https://www.masteringemacs.org/all-articles][Mastering Emacs]]
+
+** What is Dired?
+   :PROPERTIES:
+   :BEAMER_opt: allowframebreaks,label=,t
+   :END:
+- Dired (directory editor) is a build-in emacs plugin that makes working with files easy.
+- Dired makes an Emacs buffer containing a listing of a directory, and optionally some of its subdirectories as well.
+- You can use the normal Emacs commands to move around in this buffer, and special Dired commands to operate on the listed files.
+- Dired works with both local and remote directories.
+- The Dired buffer is normally read-only, and inserting text in it is not allowed (however, the Wdired mode allows that, see Wdired).
+
+** Basic configuration
+- In macOS, use =gls= in Homebrew =coreutils=.
+\scriptsize
+#+BEGIN_SRC elisp
+  ;; Use gls in Homebrew coreutils instead to allow use of --dired
+  ;; http://www.topbug.net/blog/2013/04/14/install-and-use-gnu-command-line-tools-in-mac-os-x/
+  ;; http://lists.gnu.org/archive/html/bug-gnu-emacs/2012-07/msg01208.html
+  ;; http://qiita.com/maangie/items/5a80ae50c13d14368a72
+  (setq ls-lisp-use-insert-directory-program t)
+  ;; Check existance of gls and use it if it exists
+  (let ((gls "/usr/local/bin/gls"))
+    (when (file-exists-p gls)
+      (setq insert-directory-program gls)))
+#+END_SRC
+\normalsize
+- Human readable size.
+\scriptsize
+#+BEGIN_SRC elisp
+  ;; Human-readable: Show sizes in KB/MB etc
+  ;; http://unix.stackexchange.com/questions/44858/change-view-in-emacs-dired-mode
+  ;; -a show dotfiles; -l detail; -h human-readable
+  ;; https://www.safematix.com/system/linux/ls-date-format/
+  (setq dired-listing-switches "-alh")
+#+END_SRC
+\normalsize
+- Do what I mean and miscellaneous configurations.
+\scriptsize
+#+BEGIN_SRC elisp
+  ;; If there are two dired open side by side, copy destination is the other.
+  ;; M-n shows other candidates including the current directory.
+  (setq dired-dwim-target t)
+  ;; Recursively copy directories.
+  (setq dired-recursive-copies 'always)
+  ;; C-s matches by file names only.
+  (setq dired-isearch-filenames t)
+  ;; Automatically revert dired buffer on revisiting.
+  (setq dired-auto-revert-buffer t)
+  ;; Auto-revert on change.
+  (add-hook 'dired-mode-hook 'turn-on-auto-revert-mode)
+  ;; Allow file permission rewrite
+  ;; (setq wdired-allow-to-change-permissions t)
+#+END_SRC
+\normalsize
+
+** Basic operations
+- =m= =dired-mark= to mark files.
+- =% m= =dired-mark-files-regexp= to mark files with regexp.
+- =U= =dired-unmark-all-marks= for deselecting
+- =D= =dired-do-delete= to delete marked files
+- =R= =dired-do-rename= on a file to move a file.
+
+** WDired
+   :PROPERTIES:
+   :BEAMER_opt: allowframebreaks,label=,t
+   :END:
+- [[https://www.masteringemacs.org/article/wdired-editable-dired-buffers][Mastering Emacs WDired: Editable Dired Buffers]]
+- Allows regular buffer-like editing of file names.
+- =C-x C-q= =dired-toggle-read-only= to enter editing mode.
+- =C-c C-c= =wdired-finish-edit=
+
+** Better fontification
+   :PROPERTIES:
+   :BEAMER_opt: allowframebreaks,label=,t
+   :END:
+- https://github.com/purcell/diredfl
+- Extra Emacs font lock rules for a more colourful dired.
+\scriptsize
+#+BEGIN_SRC elisp :eval no
+(use-package diredfl
+  ;; Use in GUI only.
+  :if (display-graphic-p)
+  :hook (dired-mode . diredfl-mode)
+  :commands (diredfl-mode))
+#+END_SRC
+\normalsize
+
+** Async file manipulation
+   :PROPERTIES:
+   :BEAMER_opt: allowframebreaks,label=,t
+   :END:
+- https://github.com/jwiegley/emacs-async
+- Make file operations async.
+\scriptsize
+#+BEGIN_SRC elisp
+(use-package dired-async
+  :after dired
+  :config
+  (dired-async-mode 1))
+#+END_SRC
+\normalsize
+
+** Dired shell commands
+   :PROPERTIES:
+   :BEAMER_opt: allowframebreaks,label=,t
+   :END:
+- [[https://www.masteringemacs.org/article/dired-shell-commands-find-xargs-replacement][Mastering Emacs Dired Shell Commands: The find & xargs replacement]]
+-
+- =!= =dired-do-shell-command=
+- =&= =dired-do-async-shell-command=
+- I use this with [[https://github.com/thamer/runner][runner.el]], which redefines the functions =dired-guess-default= (from =dired-x.el=) and =dired-run-shell-command= (from =dired-aux.el=).
+
+\scriptsize
+#+BEGIN_SRC elisp
+(use-package runner
+  :commands (runner-add-empty
+             runner-edit
+             runner-delete)
+  :bind (:map dired-mode-map
+              ("C-c !" . runner-add-extension))
+  ;;
+  :config
+  ;; Name of file used to save pattern and command database.
+  (setq runner-init-file (concat user-emacs-directory
+                                 "runner-conf.el"))
+  ;; When active hide all output buffers created by `dired-do-shell-command' except when the command string contains `{run:out}'.
+  (setq runner-run-in-background t)
+  ;;
+  ;; Avoid "Text is read-only" when working over tramp.
+  (defun dired-run-shell-command-buffer-remove (command)
+    "Remove corresponding output buffer before DIRED-RUN-SHELL-COMMAND.
+
+This always kills the output buffer for a fresh start.
+A running process is killed. This avoids Text is read-only
+issue that happens when running over TRAMP."
+    (let (keep-output)
+      (while (string-match "{run:out} ?" command)
+        (setq command (replace-match "" t t command))
+        (setq keep-output t))
+      ;;
+      (if keep-output
+          ;; Limit the buffer name length to 100 to avoid cluttering
+          ;; the buffer list
+          (let ((outbuf (concat "*Runner Command*: "
+                                (if (> (length command) 100)
+                                    (concat (substring command 0 100) " ...")
+                                  command))))
+            ;; If it exists, remove
+            ;; https://stackoverflow.com/questions/586735/how-can-i-check-if-a-current-buffer-exists-in-emacs
+            (when (get-buffer outbuf)
+              (kill-buffer outbuf)))
+        ;; If not keeping output
+        (when (get-buffer "*Runner Output*")
+          (kill-buffer "*Runner Output*")))))
+  ;; See help for add-function
+  (advice-add 'dired-run-shell-command
+              :before #'dired-run-shell-command-buffer-remove))
+#+END_SRC
+\normalsize
+
+** Sorting dired
+   :PROPERTIES:
+   :BEAMER_opt: allowframebreaks,label=,t
+   :END:
+\scriptsize
+- https://gitlab.com/xuhdev/dired-quick-sort
+- Hydra-based sorting manipulation.
+- I replaced =s= with this package.
+#+BEGIN_SRC elisp
+(use-package dired-quick-sort
+  :after dired
+  ;; ls-lisp-use-insert-directory-program must be non-nil
+  :if ls-lisp-use-insert-directory-program
+  ;; Automatically use the sorting defined by dired-quick-sort in dired.
+  :hook (dired-mode . dired-quick-sort)
+  ;; Invoke the dired-quick-sort hydra.
+  :bind (:map dired-mode-map
+              ("s" . hydra-dired-quick-sort/body)))
+#+END_SRC
+\normalsize
+
+** Rsync from dired
+   :PROPERTIES:
+   :BEAMER_opt: allowframebreaks,label=,t
+   :END:
+- https://github.com/stsquad/dired-rsync
+- asynchronous rsync from dired
+- Useful for large files.
+\scriptsize
+#+BEGIN_SRC elisp
+(use-package dired-rsync
+  :commands (dired-rsync)
+  :bind (:map dired-mode-map
+              ("Y" . dired-rsync)))
+#+END_SRC
+\normalsize
+
+** Dired subdirectory
+- https://github.com/Fuco1/dired-hacks#dired-subtree
+- This package defines function =dired-subtree-insert= (=i=), which is nicer than the native version.
+\scriptsize
+#+BEGIN_SRC elisp
+(use-package dired-subtree
+  :commands (dired-subtree-insert
+             dired-subtree-remove
+             dired-subtree-up-dwim)
+  :bind (:map dired-mode-map
+              ("i" . dired-subtree-insert)
+              (";" . dired-subtree-remove)
+              ("<tab>" . dired-subtree-remove)
+              ("^" . dired-subtree-up-dwim))
+  ;;
+  :config
+  (defun dired-subtree-up-dwim (&optional arg)
+    "Go to parent dir or open parent dir"
+    (interactive "p")
+    (or (dired-subtree-up arg)
+        (dired-up-directory)))
+  ;;
+  ;; No background in terminal.
+  (unless (display-graphic-p)
+    (set-face-background 'dired-subtree-depth-1-face nil)
+    (set-face-background 'dired-subtree-depth-2-face nil)
+    (set-face-background 'dired-subtree-depth-3-face nil)
+    (set-face-background 'dired-subtree-depth-4-face nil)
+    (set-face-background 'dired-subtree-depth-5-face nil)
+    (set-face-background 'dired-subtree-depth-6-face nil)))
+#+END_SRC
+\normalsize
